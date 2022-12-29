@@ -123,32 +123,14 @@
                                                         <tr>
                                                             <td align="center"
                                                                 class="esd-block-text es-p10b es-m-txt-c">
-                                                                <h1 style="font-size: 46px; line-height: 100%;">Reset
-                                                                    Your Password</h1>
+                                                                <h1 style="font-size: 46px; line-height: 100%;">Reset Your Password</h1>
                                                             </td>
                                                         </tr>
                                                         <tr>
                                                             <td align="center"
                                                                 class="esd-block-text es-p5t es-p5b es-p40r es-p40l es-m-p0r es-m-p0l">
-                                                                <p>You’ve received this message because your email
-                                                                    address has been registered with our site. Please
-                                                                    click the button below to verify your email address
-                                                                    and confirm that you are the owner of this
-                                                                    account.</p>
-                                                                {{ $link }}
-                                                            </td>
-                                                        </tr>
-                                                        <tr>
-                                                            <td align="center" class="esd-block-text es-p10t es-p5b">
-                                                                <p>If you did not register with us, please disregard
-                                                                    this email.</p>
-                                                            </td>
-                                                        </tr>
-                                                        <tr>
-                                                            <td align="center"
-                                                                class="esd-block-text es-p5t es-p5b es-p40r es-p40l es-m-p0r es-m-p0l">
-                                                                <p>Once confirmed, this email will be uniquely
-                                                                    associated with your account.</p>
+                                                                <p>Hello,{{$user->name. ' ' . $user->surname}}, a <a href="{{$link}}">link</a> to reset your password has been sent to you.
+                                                                   If it wasn't you, check your account and write to support support@support.com</p>
                                                             </td>
                                                         </tr>
                                                         </tbody>

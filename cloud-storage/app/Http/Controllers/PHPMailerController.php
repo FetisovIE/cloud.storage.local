@@ -25,6 +25,7 @@ class PHPMailerController extends Controller
 
         try {
             $user = $this->user;
+            $link = 'http://localhost/';
 
             $mail->isSMTP();
             $mail->CharSet = "UTF-8";
@@ -32,7 +33,7 @@ class PHPMailerController extends Controller
 
             $mail->Host = 'smtp.gmail.com';
             $mail->Username = 'ig.fetisoff@gmail.com';
-            $mail->Password = 'root';
+            $mail->Password = 'leucjvhqftjwazmf';
             $mail->SMTPSecure = 'ssl';
             $mail->Port = 465;
 
@@ -41,7 +42,7 @@ class PHPMailerController extends Controller
             $mail->isHTML();
 
             $mail->Subject = 'Сброс пароля';
-            $mail->Body = view('email')->with(['link'=>'asdasdasd']);
+            $mail->Body = view('email')->with(['user' => $user, 'link' => $link]);
 
             if (!$mail->send()) {
                 return response()->json(['failed' => 'Email not sent.']);
