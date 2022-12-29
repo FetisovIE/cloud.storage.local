@@ -4,6 +4,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\AdminController;
+use App\Http\Controllers\PHPMailerController;
 
 /*
 |--------------------------------------------------------------------------
@@ -26,8 +27,9 @@ Route::put('/user', [UserController::class, 'update']);
 Route::get('/user', [UserController::class, 'listUsers']);
 Route::get('/user/{id}', [UserController::class, 'listUser']);
 
-Route::post('/login', [UserController::class, 'login'])->name('login');
-Route::post('/logout', [UserController::class, 'logout'])->name('logout');
+Route::get('/login', [UserController::class, 'login'])->name('login');
+Route::get('/logout', [UserController::class, 'logout'])->name('logout');
+Route::get('/reset-password', [UserController::class, 'reset_password']);
 
 Route::group([
     'prefix' => 'admin'
