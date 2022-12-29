@@ -4,30 +4,14 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Validation\ValidationException;
 use Tymon\JWTAuth\Exceptions\JWTException;
 use Tymon\JWTAuth\Facades\JWTAuth;
-use Illuminate\Auth\Events\PasswordReset;
-use Illuminate\Http\Response;
 
 class UserController extends Controller
 {
-    /*public function login()
-    {
-        $credentials = request(['email', 'password']);
-
-        if (!auth()->attempt($credentials)) {
-            return response()->json(['error' => 'Unauthorized'], 401);
-        }
-
-        $token = auth()->attempt($credentials);
-        setcookie('access_token', $token, time()+3600);
-    }*/
-
     /**
      * @throws ValidationException
      */
@@ -59,26 +43,6 @@ class UserController extends Controller
 
         return response()->json(['message' => 'Successfully logged out']);
     }
-
-    /*public function reset_password(Request $request)
-    {
-        $user = User::where('email', $request->email)->first();
-        if (!$user) {
-            return response()->json(['error' => 'Email doesn\'t found on our database'], Response::HTTP_NOT_FOUND);
-        }
-        $passwordReset = PasswordReset::updateOrCreate(
-            ['email' => $user->email],
-            [
-                'email' => $user->email,
-                'token' => JWTAuth::fromUser($user)
-            ]
-        );
-        if ($user && $passwordReset) {
-            $user->notify(new ResetPasswordNotification($passwordReset->token));
-        }
-        return response()->json(['data' => 'Reset link is send successfully, please check your inbox.'], Response::HTTP_OK);
-    }*/
-
 
     public function create(Request $request): JsonResponse
     {
@@ -131,13 +95,21 @@ class UserController extends Controller
 
     public function listUsers(): array
     {
-        $users = DB::table('users')->get();
+        $users = User::all();
         return ['users' => $users];
     }
 
     public function listUser($id)
     {
-        return DB::table('users')->find($id);
+        return User::find($id);
+    }
+
+    public function reset_password(Request $request): JsonResponse
+    {
+        $email = $request->get('email');
+        $user = User::where('email', 'like', $email)->first();
+        $mail = new PHPMailerController($email, $user);
+        return $mail->sentMail();
     }
 
     /*protected function respondWithToken($token): JsonResponse
