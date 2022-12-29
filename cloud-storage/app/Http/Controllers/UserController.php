@@ -93,13 +93,13 @@ class UserController extends Controller
         return response()->json(['message' => 'User successfully deleted']);
     }
 
-    public function listUsers(): array
+    public function listUsers(): array|JsonResponse
     {
         $users = User::all();
         return ['users' => $users];
     }
 
-    public function listUser($id)
+    public function listUser($id): User|JsonResponse
     {
         return User::find($id);
     }
@@ -111,13 +111,4 @@ class UserController extends Controller
         $mail = new PHPMailerController($email, $user);
         return $mail->sentMail();
     }
-
-    /*protected function respondWithToken($token): JsonResponse
-    {
-        return response()->json([
-            'access_token' => $token,
-            'token_type' => 'bearer',
-            'expires_in' => auth()->factory()->getTTL() * 60
-        ]);
-    }*/
 }
