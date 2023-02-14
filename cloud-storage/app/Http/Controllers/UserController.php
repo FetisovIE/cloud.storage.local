@@ -93,15 +93,15 @@ class UserController extends Controller
         return response()->json(['message' => 'User successfully deleted']);
     }
 
-    public function listUsers(): array|JsonResponse
+    public function listUsers(): JsonResponse
     {
         $users = User::all();
-        return ['users' => $users];
+        return response()->json(['users' => $users]);
     }
 
-    public function listUser($id): User|JsonResponse
+    public function listUser($id): JsonResponse
     {
-        return User::find($id);
+        return response()->json(User::find($id));
     }
 
     public function reset_password(Request $request): JsonResponse
