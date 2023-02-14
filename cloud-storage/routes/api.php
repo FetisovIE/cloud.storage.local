@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\PHPMailerController;
+use App\Http\Controllers\FileController;
 
 /*
 |--------------------------------------------------------------------------
@@ -39,3 +40,14 @@ Route::group([
     Route::delete('user/{id}', [AdminController::class, 'delete']);
     Route::put('user', [AdminController::class, 'update']);
 });
+
+Route::post('/directory', [FileController::class, 'makeDirectory']);
+Route::put('/directory', [FileController::class, 'renameDirectory']);
+Route::get('/directory/{id}', [FileController::class, 'getDirectoryInfo']);
+Route::delete('/directory/{id}', [FileController::class, 'deleteDirectory']);
+
+Route::get('/file', [FileController::class, 'getFiles']);
+Route::get('/file/{id}', [FileController::class, 'getFileInfo']);
+Route::post('/file', [FileController::class, 'uploadFile']);
+Route::put('/file', [FileController::class, 'renameOrMoveFile']);
+Route::delete('/file/{id}', [FileController::class, 'deleteFile']);
