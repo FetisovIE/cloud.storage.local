@@ -31,13 +31,13 @@ class PHPMailerController extends Controller
             $mail->CharSet = "UTF-8";
             $mail->SMTPAuth = true;
 
-            $mail->Host = 'smtp.gmail.com';
-            $mail->Username = 'ig.fetisoff@gmail.com';
-            $mail->Password = 'leucjvhqftjwazmf';
-            $mail->SMTPSecure = 'ssl';
-            $mail->Port = 465;
+            $mail->Host = env('MAIL_HOST');
+            $mail->Username = env('MAIL_USERNAME');
+            $mail->Password = env('MAIL_PASSWORD');
+            $mail->SMTPSecure = env('MAIL_ENCRYPTION');
+            $mail->Port = env('MAIL_PORT');
 
-            $mail->setFrom('ig.fetisoff@gmail.com', 'Igor Fetisov');
+            $mail->setFrom(env('MAIL_FROM_ADDRESS'), 'Igor Fetisov');
             $mail->addAddress($this->email);
             $mail->isHTML();
 
