@@ -119,124 +119,160 @@ class FileController extends Controller
 
     public function getFileInfo($id): JsonResponse
     {
-        $path = File::find($id)->path;
+        if (Auth::check()) {
+            $path = File::find($id)->path;
+            $userId = Auth::id();
 
-        if (!Storage::disk('public')->exists($path)) {
-            return response()->json(['message' => "File $path does not exist"],
-                404);
+            if (!Storage::disk('public')->exists($path)) {
+                return response()->json(['message' => "File $path does not exist"],
+                    404);
+            }
+
+            $fileName = File::find($id)->name;
+            $size = Storage::disk('public')->size($path);
+            $lastModified = File::find($id)->updated_at;
+            $fileUserId = File::find($id)->user_id;
+
+            if ($fileUserId !== $userId) {
+                return response()->json(['message' => "File $fileName does not belong to the user"], 403);
+            }
+            return response()->json(
+                [
+                    'message' => "Information about the file",
+                    'data' =>
+                        [
+                            'file name' => "$fileName",
+                            'size' => $size / 1024 / 1024 . ' ' . 'MB',
+                            'last modified' => "$lastModified"
+                        ]
+                ]
+            );
         }
-
-        $fileName = File::find($id)->name;
-        $size = Storage::disk('public')->size($path);
-        $lastModified = File::find($id)->updated_at;
-
-        return response()->json(
-            [
-                'message' => "Information about the file",
-                'data'    =>
-                    [
-                        'file name' => "$fileName",
-                        'size' => $size / 1024 / 1024 .' '.'MB',
-                        'last modified' => "$lastModified"
-                    ]
-            ]
-        );
+        return response()->json(['message' => 'User is not login'], 403);
     }
 
     public function getFiles(): JsonResponse
     {
-        return response()->json([
-            'files' => File::wherenotNULL('folder_id')->select('id', 'name',
-                'path')->get()
-        ]);
+        if (Auth::check()) {
+            $userId = Auth::id();
+            return response()->json([
+                'files' => File::where('user_id', '=', $userId)->wherenotNULL('folder_id')->select('id', 'name',
+                    'path')->get()
+            ]);
+        }
+        return response()->json(['message' => 'User is not login'], 403);
     }
 
     public function renameOrMoveFile(Request $request): JsonResponse
     {
-        $id = $request->get('id');
-        $path = $request->get('path');
-        $newName = $request->get('new_name');
-        $newFileName = $path.DIRECTORY_SEPARATOR.$newName;
-        $file = File::find($id);
-        $pathFile = $file->path;
-        $oldFileName = $file->name;
+        if (Auth::check()) {
+            $id = $request->get('id');
+            $path = $request->get('path');
+            $newName = $request->get('new_name');
+            $newFileName = $path . DIRECTORY_SEPARATOR . $newName;
+            $file = File::find($id);
+            $pathFile = $file->path;
+            $oldFileName = $file->name;
+            $userId = Auth::id();
 
-        if (!Storage::disk('public')->exists($pathFile)) {
-            return response()->json(['message' => "File $oldFileName does not exist"],
-                404);
+            if (!Storage::disk('public')->exists($pathFile)) {
+                return response()->json(['message' => "File $oldFileName does not exist"], 404);
+            }
+
+            if ($file->user_id !== $userId) {
+                return response()->json(['Error' => 'You do not have permission to perform this action'], 403);
+            }
+
+            $file->name = basename($newFileName);
+            $folder = File::where('path', dirname($newFileName))->first();
+
+            if ($path === dirname($pathFile)) {
+                $file->save();
+                return response()->json(['message' => 'File has been renamed successfully']);
+            } elseif ($folder) {
+                $file->path = str_replace(dirname($pathFile), dirname($newFileName), $pathFile);
+                $file->folder()->associate($folder);
+                $file->save();
+                Storage::disk('public')->move(dirname($pathFile) . DIRECTORY_SEPARATOR . basename($pathFile),
+                    dirname($newFileName) . DIRECTORY_SEPARATOR . basename($pathFile));
+                return response()->json(['message' => 'File has been successfully renamed and/or moved']);
+            }
+            return response()->json(['message' => 'Folder to move is not found, first create a folder'], 404);
         }
-
-        $file->name = basename($newFileName);
-        $folder = File::where('path', dirname($newFileName))->first();
-
-        if ($path === dirname($pathFile)) {
-            $file->save();
-            return response()->json(['message' => 'File has been renamed successfully']);
-        } elseif ($folder) {
-            $file->path = str_replace(dirname($pathFile), dirname($newFileName),
-                $pathFile);
-            $file->folder()->associate($folder);
-            $file->save();
-            Storage::disk('public')->move(dirname($pathFile).DIRECTORY_SEPARATOR
-                .basename($pathFile),
-                dirname($newFileName).DIRECTORY_SEPARATOR.basename($pathFile));
-            return response()->json(['message' => 'File has been successfully renamed and/or moved']);
-        }
-        return response()->json(['message' => 'Folder to move is not found, first create a folder'],
-            404);
+        return response()->json(['message' => 'User is not login'], 403);
     }
 
     public function deleteFile($id): JsonResponse
     {
-        $file = File::where('id', '=', $id)->whereNotNull('folder_id')->first();
-        if (!$file) {
-            return response()->json(['message' => "File with id $id not found or is not a file"],
-                404);
+        if (Auth::check()) {
+            $file = File::where('id', '=', $id)->whereNotNull('folder_id')->first();
+            $userId = Auth::id();
+
+            if (!$file) {
+                return response()->json(['message' => "File with id $id not found or is not a file"], 404);
+            }
+
+            if ($file->user_id !== $userId) {
+                return response()->json(['Error' => 'You do not have permission to perform this action'], 403);
+            }
+
+            $path = $file->path;
+            $file->delete();
+            Storage::disk('public')->delete($path);
+            return response()->json(['message' => 'File was successfully deleted']);
         }
-        $path = $file->path;
-        $file->delete();
-        Storage::disk('public')->delete($path);
-        return response()->json(['message' => 'File was successfully deleted']);
+        return response()->json(['message' => 'User is not login'], 403);
     }
 
     public function getDirectoryInfo($id): JsonResponse
     {
-        $directory = File::where('id', '=', $id)->whereNull('folder_id')
-            ->first();
-        if (!$directory) {
-            return response()->json(['message' => "Directory with id $id not found or is not a directory"],
-                404);
-        }
+        if (Auth::check()) {
+            $directory = File::where('id', '=', $id)->whereNull('folder_id')->first();
+            $userId = Auth::id();
 
-        $path = $directory->path;
+            if (!$directory) {
+                return response()->json(['message' => "Directory with id $id not found or is not a directory"], 404);
+            }
 
-        if (!empty(Storage::disk('public')->files($path))) {
-            return response()->json([
-                'Files' => Storage::disk('public')->files($path)
-            ]);
-        } else {
-            return response()->json(['message' => "No files found in the directory"],
-                404);
+            if ($directory->user_id !== $userId) {
+                return response()->json(['Error' => 'You do not have permission to perform this action'], 403);
+            }
+
+            $path = $directory->path;
+
+            if (!empty(Storage::disk('public')->files($path))) {
+                return response()->json(['Files' => Storage::disk('public')->files($path)]);
+            } else {
+                return response()->json(['message' => "No files found in the directory"], 404);
+            }
         }
+        return response()->json(['message' => 'User is not login'], 403);
     }
 
     public function deleteDirectory($id): JsonResponse
     {
-        $directory = File::where('id', '=', $id)->whereNull('folder_id')
-            ->first();
-        if (!$directory) {
-            return response()->json(['message' => "Directory with id $id not found or is not a directory"],
-                404);
-        }
+        if (Auth::check()) {
+            $directory = File::where('id', '=', $id)->whereNull('folder_id')->first();
+            $userId = Auth::id();
 
-        $path = $directory->path;
+            if (!$directory) {
+                return response()->json(['message' => "Directory with id $id not found or is not a directory"], 404);
+            }
 
-        if (empty(Storage::disk('public')->files($path))) {
-            $directory->delete();
-            Storage::disk('public')->deleteDirectory($path);
-            return response()->json(['message' => 'Directory was successfully deleted']);
-        } else {
-            return response()->json(['message' => 'Folder is not empty, first delete the files'], 404);
+            if ($directory->user_id !== $userId) {
+                return response()->json(['Error' => 'You do not have permission to perform this action'], 403);
+            }
+
+            $path = $directory->path;
+
+            if (empty(Storage::disk('public')->files($path))) {
+                $directory->delete();
+                Storage::disk('public')->deleteDirectory($path);
+                return response()->json(['message' => 'Directory was successfully deleted']);
+            } else {
+                return response()->json(['Error' => 'Folder is not empty, first delete the files'], 404);
+            }
         }
+        return response()->json(['message' => 'User is not login'], 403);
     }
 }
