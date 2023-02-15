@@ -6,6 +6,7 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Response;
 use Illuminate\Validation\ValidationException;
 use Tymon\JWTAuth\Exceptions\JWTException;
 use Tymon\JWTAuth\Facades\JWTAuth;
@@ -15,7 +16,7 @@ class UserController extends Controller
     /**
      * @throws ValidationException
      */
-    public function login(Request $request): ?JsonResponse
+    public function login(Request $request): JsonResponse
     {
         $this->validate($request, [
             'email' => 'required|email',
@@ -31,8 +32,9 @@ class UserController extends Controller
         } catch (JWTException $e) {
             return response()->json(['error' => 'Could not create token'], 500);
         }
+
         setcookie('access_token', $token, time() + 3600);
-        return null;
+        return response()->json(['token' => $token]);
     }
 
     public function logout(): JsonResponse
