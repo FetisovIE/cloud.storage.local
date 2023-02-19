@@ -6,7 +6,6 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Response;
 use Illuminate\Validation\ValidationException;
 use Tymon\JWTAuth\Exceptions\JWTException;
 use Tymon\JWTAuth\Facades\JWTAuth;
@@ -112,5 +111,16 @@ class UserController extends Controller
         $user = User::where('email', 'like', $email)->first();
         $mail = new PHPMailerController($email, $user);
         return $mail->sentMail();
+    }
+
+    public function searchUser($email): JsonResponse
+    {
+        $user = User::where('email', 'like', $email)->first();
+        return response()->json(['User' =>
+            ['id' => $user->id,
+             'name' => $user->name,
+             'surname' => $user->surname,
+             'email' => $user->email]
+        ]);
     }
 }
