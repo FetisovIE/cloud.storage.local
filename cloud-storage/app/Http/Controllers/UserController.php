@@ -94,10 +94,10 @@ class UserController extends Controller
         return response()->json(['message' => 'User successfully deleted']);
     }
 
-    public function listUsers(): JsonResponse
+    public function listUsers(): array
     {
         $users = User::all();
-        return response()->json(['users' => $users]);
+        return ['users' => $users];
     }
 
     public function listUser($id): JsonResponse
