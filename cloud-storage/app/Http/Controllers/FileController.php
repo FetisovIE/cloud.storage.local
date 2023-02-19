@@ -2,11 +2,14 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\ShareScheme;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use App\Models\File;
 use Illuminate\Http\JsonResponse;
+use App\Models\User;
 
 class FileController extends Controller
 {
@@ -272,6 +275,67 @@ class FileController extends Controller
             } else {
                 return response()->json(['Error' => 'Folder is not empty, first delete the files'], 404);
             }
+        }
+        return response()->json(['message' => 'User is not login'], 403);
+    }
+
+    public function addFileAccess($id, $user_id): JsonResponse
+    {
+        if (Auth::check()) {
+            $userAuthId = Auth::id();
+            $file = File::where('id', '=', $id)->where('user_id', '=', $userAuthId)->whereNotNull('folder_id')->first();
+            $user = User::where('id', '=', $user_id)->first();
+
+            if (!$file) {
+                return response()->json(['message' => "File with the id $id was not found or you are not the owner of the file"], 404);
+            }
+
+            if (!$user) {
+                return response()->json(['message' => "User with id $user_id was not found"], 404);
+            }
+
+            $shareScheme = new ShareScheme();
+            $shareScheme->user_id = $user_id;
+            $shareScheme->file_id = $id;
+            $shareScheme->save();
+
+            return response()->json(['message' => "Access to a user with id $user_id is granted to a file with id $id"]);
+        }
+        return response()->json(['message' => 'User is not login'], 403);
+    }
+
+    public function deleteUserAccess($id, $user_id): JsonResponse
+    {
+        if (Auth::check()) {
+            $userAuthId = Auth::id();
+            $shareScheme = ShareScheme::where('user_id', '=', $user_id)->where('file_id', '=', $id)->first();
+            $file = File::where('id', '=', $id)->first();
+
+            if (!$shareScheme) {
+                return response()->json(['message' => 'Access with the specified parameters was not found'], 404);
+            }
+
+            if ($file->user_id !== $userAuthId)
+            {
+                return response()->json(['Error' => 'You are not the owner of the file']);
+            }
+
+            $shareScheme->delete();
+            return response()->json(['message' => "Access to the file with id $id to the user with id $user_id has been terminated"]);
+        }
+        return response()->json(['message' => 'User is not login'], 403);
+    }
+
+    public function getUsersAccess($id): JsonResponse
+    {
+        if (Auth::check()) {
+            $users = DB::table('share_schemes as sch')
+                ->join('users as u', 'sch.user_id', '=', 'u.id')
+                ->select('u.id', 'u.name', 'u.surname', 'u.email')
+                ->where('sch.file_id', $id)
+                ->get();
+
+            return response()->json(['users access' => $users]);
         }
         return response()->json(['message' => 'User is not login'], 403);
     }
