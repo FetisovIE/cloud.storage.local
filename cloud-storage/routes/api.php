@@ -27,6 +27,7 @@ Route::delete('/user/{id}', [UserController::class, 'delete']);
 Route::put('/user', [UserController::class, 'update']);
 Route::get('/user', [UserController::class, 'listUsers']);
 Route::get('/user/{id}', [UserController::class, 'listUser']);
+Route::get('/user/search/{email}', [UserController::class, 'searchUser']);
 
 Route::get('/login', [UserController::class, 'login'])->name('login');
 Route::get('/logout', [UserController::class, 'logout'])->name('logout');
@@ -51,3 +52,7 @@ Route::get('/file/{id}', [FileController::class, 'getFileInfo']);
 Route::post('/file', [FileController::class, 'uploadFile']);
 Route::put('/file', [FileController::class, 'renameOrMoveFile']);
 Route::delete('/file/{id}', [FileController::class, 'deleteFile']);
+
+Route::put('/files/share/{id}/{user_id}', [FileController::class, 'addFileAccess']);
+Route::delete('/files/share/{id}/{user_id}', [FileController::class, 'deleteUserAccess']);
+Route::get('/files/share/{id}', [FileController::class, 'getUsersAccess']);

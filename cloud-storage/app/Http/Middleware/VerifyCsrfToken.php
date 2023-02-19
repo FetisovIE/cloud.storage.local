@@ -23,5 +23,7 @@ class VerifyCsrfToken extends Middleware
         '/file',
         '/file/*',
         '/directory/*',
+        '/user/*',
+        '/files/*',
     ];
 }
