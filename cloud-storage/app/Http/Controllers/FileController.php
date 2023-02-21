@@ -10,14 +10,30 @@ use Illuminate\Support\Facades\Storage;
 use App\Models\File;
 use Illuminate\Http\JsonResponse;
 use App\Models\User;
+use Illuminate\Validation\ValidationException;
 
 class FileController extends Controller
 {
     public function uploadFile(Request $request): JsonResponse
     {
         if (Auth::check()) {
+            try {
+                $this->validate($request, [
+                    'directory' => 'required'
+                ], [
+                    'directory.required' => 'The directory field is mandatory'
+                ]);
+            } catch (ValidationException $e) {
+                return response()->json(['message' => $e->getMessage()], 422);
+            }
+
             if ($request->hasFile('file')) {
                 $file = $request->file('file');
+
+                if ($file->getSize() > 2147483648) {
+                    return response()->json(['message' => 'File size is too large'], 400);
+                }
+
                 $fileName = $file->getClientOriginalName();
                 $directory = $request->get('directory');
                 $path = Storage::disk('public')->putFile($directory, $file);
